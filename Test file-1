@@ -1,0 +1,166 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+
+export default function BashatiBayRooftop() {
+  const [page, setPage] = useState("home");
+  const [lang, setLang] = useState("en");
+
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    date: "",
+    guests: "",
+  });
+
+  const [bookings, setBookings] = useState([]);
+
+  const WHATSAPP_NUMBER = "8801766789106";
+
+  const t = {
+    en: {
+      title: "Bashati Bay Resort",
+      subtitle: "Luxury Rooftop Dining • Cox’s Bazar • 8th Floor",
+      book: "Book a Table",
+      menu: "Signature Menu",
+      reserve: "Reserve Your Table",
+      admin: "Admin Dashboard",
+    },
+    bn: {
+      title: "বাশাটি বে রিসোর্ট",
+      subtitle: "লাক্সারি রুফটপ ডাইনিং • কক্সবাজার • ৮ম তলা",
+      book: "টেবিল বুক করুন",
+      menu: "বিশেষ মেনু",
+      reserve: "টেবিল রিজার্ভ করুন",
+      admin: "অ্যাডমিন ড্যাশবোর্ড",
+    },
+  };
+
+  // Load bookings (client only)
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem("bookings") || "[]");
+    setBookings(data);
+  }, []);
+
+  // Save bookings
+  useEffect(() => {
+    localStorage.setItem("bookings", JSON.stringify(bookings));
+  }, [bookings]);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleBooking = () => {
+    if (!form.name || !form.phone || !form.date) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    const newBooking = { ...form, id: Date.now() };
+    setBookings([...bookings, newBooking]);
+
+    const msg = `Booking:%0AName:${form.name}%0APhone:${form.phone}%0ADate:${form.date}%0AGuests:${form.guests}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
+
+    setForm({ name: "", phone: "", date: "", guests: "" });
+    alert("Booking confirmed!");
+    setPage("home");
+  };
+
+  const handleDelete = (id) => {
+    const updated = bookings.filter((b) => b.id !== id);
+    setBookings(updated);
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      {/* NAV */}
+      <div className="flex justify-between p-4 border-b border-gray-800">
+        <h1 className="font-bold">Bashati Bay</h1>
+        <div className="space-x-3">
+          <button onClick={() => setPage("home")}>Home</button>
+          <button onClick={() => setPage("menu")}>Menu</button>
+          <button onClick={() => setPage("reserve")}>Book</button>
+          <button onClick={() => setPage("admin")}>Admin</button>
+          <button onClick={() => setLang(lang === "en" ? "bn" : "en")}>EN/BN</button>
+        </div>
+      </div>
+
+      {/* HOME */}
+      {page === "home" && (
+        <div className="h-screen flex items-center justify-center text-center bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21')" }}>
+          <div className="bg-black/60 p-10 rounded-2xl max-w-2xl">
+            <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-5xl font-bold">
+              {t[lang].title}
+            </motion.h1>
+            <p className="text-xl mt-4">{t[lang].subtitle}</p>
+            <Button onClick={() => setPage("reserve")} className="mt-6 bg-yellow-400 text-black">
+              {t[lang].book}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* MENU */}
+      {page === "menu" && (
+        <section className="p-10">
+          <h2 className="text-3xl text-center mb-6">{t[lang].menu}</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card><CardContent className="p-4">Seafood Platter</CardContent></Card>
+            <Card><CardContent className="p-4">BBQ Steak</CardContent></Card>
+            <Card><CardContent className="p-4">Mocktails</CardContent></Card>
+          </div>
+        </section>
+      )}
+
+      {/* RESERVE */}
+      {page === "reserve" && (
+        <section className="p-10 text-center">
+          <h2 className="text-3xl mb-6">{t[lang].reserve}</h2>
+
+          <div className="max-w-md mx-auto space-y-3">
+            <input className="w-full p-2 text-black" name="name" value={form.name} placeholder="Name" onChange={handleChange} />
+            <input className="w-full p-2 text-black" name="phone" value={form.phone} placeholder="Phone" onChange={handleChange} />
+            <input className="w-full p-2 text-black" type="date" name="date" value={form.date} onChange={handleChange} />
+            <input className="w-full p-2 text-black" name="guests" value={form.guests} placeholder="Guests" onChange={handleChange} />
+
+            <Button onClick={handleBooking} className="w-full bg-yellow-400 text-black">
+              Confirm Booking
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* ADMIN */}
+      {page === "admin" && (
+        <section className="p-10">
+          <h2 className="text-3xl mb-6">{t[lang].admin}</h2>
+
+          {bookings.length === 0 ? (
+            <p>No bookings yet</p>
+          ) : (
+            bookings.map((b) => (
+              <div key={b.id} className="bg-gray-900 p-4 mb-3 rounded">
+                <p><b>{b.name}</b> | {b.phone}</p>
+                <p>{b.date} | Guests: {b.guests}</p>
+                <button className="text-red-400" onClick={() => handleDelete(b.id)}>
+                  Delete
+                </button>
+              </div>
+            ))
+          )}
+        </section>
+      )}
+
+      {/* FOOTER */}
+      <footer className="p-10 text-center text-gray-500">
+        <p>© Bashati Bay Resort Rooftop</p>
+        <p>Cox’s Bazar Luxury Dining Experience</p>
+      </footer>
+    </div>
+  );
+}
